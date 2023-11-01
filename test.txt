@@ -1,0 +1,20 @@
+/*
+================================================================================
+TEST FILE FOR THE 'get_next_line' PROJECT
+
+This file is specifically designed for testing the 'get_next_line' function.
+Each line represents a separate test case, and the function should correctly
+return each line when called in a loop.
+
+Please DO NOT modify this file, as it is crucial for accurately testing the
+functionality and robustness of the 'get_next_line' function.
+
+Happy testing!
+================================================================================
+*/
+
+Hello, World! This is the first test line.
+This is the second test line.
+And this is the third.
+Here's another line for good measure.
+And one more to round it off.
