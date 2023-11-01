@@ -6,7 +6,7 @@
 /*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/01 11:33:17 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/01 18:46:27 by abhudulo         ###   ########.fr       */
+/*   Updated: 2023/11/01 19:54:43 by abhudulo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,7 @@ typedef struct	s_list
 
 int				get_next_line(int fd, char **line);
 size_t			ft_strlen(const char *str);
-char			*strjoin_free(char *line_part, char *buf,
-		size_t len_buf, char *to_free);
+char			*join_and_free(char *line_segment, char *buffer, size_t buffer_length, char *to_free);
 
 #endif
 

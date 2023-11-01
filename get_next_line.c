@@ -6,7 +6,7 @@
 /*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/01 11:32:54 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/01 19:51:31 by abhudulo         ###   ########.fr       */
+/*   Updated: 2023/11/01 19:55:50 by abhudulo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,13 @@ static short	handle_no_newline(char **line_part, t_buf *buffer, char **line, siz
 
 	if (buffer->status == NOT_FINISHED)
 	{
-		*line_part = strjoin_free(*line_part, buffer->rest, length, *line_part);
+		*line_part = join_and_free(*line_part, buffer->rest, length, *line_part);
 		free(buffer->rest);
 		return_code = (*line_part != NULL) ? NOT_ENOUGH : ERROR;
 	}
 	else
 	{
-		*line = strjoin_free(*line_part, buffer->rest, length, *line_part);
+		*line = join_and_free(*line_part, buffer->rest, length, *line_part);
 		return_code = (*line != NULL) ? END : ERROR;
 	}
 	return (return_code);
@@ -45,11 +45,11 @@ static short	process_data(char **line_segment, t_buf *buffer, char **line, size_
 		index++;
 	if (index < length)
 	{
-		*line = strjoin_free(*line_segment, buffer->rest, index, *line_segment);
+		*line = join_and_free(*line_segment, buffer->rest, index, *line_segment);
 		if (*line != NULL)
 		{
 			index++;
-			buffer->rest = strjoin_free(NULL, buffer->rest + index, length - index, buffer->rest);
+			buffer->rest = join_and_free(NULL, buffer->rest + index, length - index, buffer->rest);
 			if (buffer->rest != NULL)
 				return_code = ENOUGH;
 			else
