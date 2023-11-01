@@ -19,14 +19,38 @@ The function returns 1 if a line has been read, 0 if the end of the file has bee
 
 int main(void)
 {
-	int fd = open("test.txt", O_RDONLY);
-	char *line = NULL;
-	while (get_next_line(fd, &line) > 0)
-	{
-		printf("%s\n", line);
-		free(line);
-	}
-	close(fd);
-	return 0;
+    int file_descriptor;
+    char *line = NULL;
+
+    // Open the file
+    file_descriptor = open("test.txt", O_RDONLY);
+    if (file_descriptor < 0)
+    {
+        perror("Error opening file");
+        return (1);
+    }
+
+    // Use fetch_next_line to read lines from the file
+    while (fetch_next_line(file_descriptor, &line) > 0)
+    {
+        // Print each line to the console
+        printf("%s\n", line);
+        // Free the memory allocated for each line
+        free(line);
+        line = NULL;
+    }
+
+    // Check if there was an error reading the last line
+    if (line != NULL)
+    {
+        free(line);
+    }
+
+    // Close the file
+    close(file_descriptor);
+
+	//   It is also possible to run cc -D BUFFER_SIZE=1024 get_next_line.c get_next_line_utils.c -o get_next_line and modify BUFFER_SIZE 
+
+    return (0);
 }
 This example reads a file named test.txt and prints each line to the console.
