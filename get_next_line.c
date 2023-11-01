@@ -6,7 +6,7 @@
 /*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/01 11:32:54 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/01 19:00:11 by abhudulo         ###   ########.fr       */
+/*   Updated: 2023/11/01 19:51:31 by abhudulo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,179 +16,173 @@
 
 #define BUFFER_SIZE 4096
 
-static short	no_newline(char **line_part, t_buf *b, char **line, size_t len)
+static short	handle_no_newline(char **line_part, t_buf *buffer, char **line, size_t length)
 {
-	short		ret_code;
+	short		return_code;
 
-	ret_code = ERROR;
-	if (b->status == NOT_FINISHED)
+	if (buffer->status == NOT_FINISHED)
 	{
-		*line_part = strjoin_free(*line_part, b->rest, len, *line_part);
-		free(b->rest);
-		if (*line_part != NULL)
-			ret_code = NOT_ENOUGH;
+		*line_part = strjoin_free(*line_part, buffer->rest, length, *line_part);
+		free(buffer->rest);
+		return_code = (*line_part != NULL) ? NOT_ENOUGH : ERROR;
 	}
 	else
 	{
-		*line = strjoin_free(*line_part, b->rest, len, *line_part);
-		if (*line != NULL)
-			ret_code = END;
+		*line = strjoin_free(*line_part, buffer->rest, length, *line_part);
+		return_code = (*line != NULL) ? END : ERROR;
 	}
-	return (ret_code);
+	return (return_code);
 }
 
-static short	parse_data(char **line_part, t_buf *b, char **line, size_t len)
+static short	process_data(char **line_segment, t_buf *buffer, char **line, size_t length)
 {
-	short			ret_code;
+	short			return_code;
 	unsigned long	index;
 
-	ret_code = ERROR;
+	return_code = ERROR;
 	index = 0;
-	while (index < len && (b->rest)[index] != '\n')
+	while (index < length && (buffer->rest)[index] != '\n')
 		index++;
-	if (index < len)
+	if (index < length)
 	{
-		*line = strjoin_free(*line_part, b->rest, index, *line_part);
+		*line = strjoin_free(*line_segment, buffer->rest, index, *line_segment);
 		if (*line != NULL)
 		{
 			index++;
-			b->rest = strjoin_free(NULL, b->rest + index, len - index, b->rest);
-			if (b->rest != NULL)
-				ret_code = ENOUGH;
+			buffer->rest = strjoin_free(NULL, buffer->rest + index, length - index, buffer->rest);
+			if (buffer->rest != NULL)
+				return_code = ENOUGH;
 			else
 				free(*line);
 		}
 	}
 	else
-		ret_code = no_newline(line_part, b, line, len);
-	return (ret_code);
+		return_code = handle_no_newline(line_segment, buffer, line, length);
+	return (return_code);
 }
 
-static short	read_part(char **line_part, t_buf *buf, char **line, int fd)
+static short	read_segment(char **line_segment, t_buf *buffer, char **line, int file_descriptor)
 {
-	short		ret_code;
+	short		return_code;
 	ssize_t		bytes_read;
 
-	ret_code = NOT_ENOUGH;
-	while (ret_code == NOT_ENOUGH)
+	return_code = NOT_ENOUGH;
+	while (return_code == NOT_ENOUGH)
 	{
-		ret_code = ERROR;
-		buf->rest = (char *)malloc(sizeof(char) * BUFFER_SIZE);
-		if (buf->rest != NULL)
+		return_code = ERROR;
+		buffer->rest = (char *)malloc(sizeof(char) * BUFFER_SIZE);
+		if (buffer->rest != NULL)
 		{
-			bytes_read = read(fd, buf->rest, BUFFER_SIZE);
-			if (fd != 0 && bytes_read < BUFFER_SIZE)
-				buf->status = ALL_READ;
-			else if (fd == 0
-					&& (bytes_read == 0 || ((buf->rest)[bytes_read - 1] != '\n'
+			bytes_read = read(file_descriptor, buffer->rest, BUFFER_SIZE);
+			if (file_descriptor != 0 && bytes_read < BUFFER_SIZE)
+				buffer->status = ALL_READ;
+			else if (file_descriptor == 0
+					&& (bytes_read == 0 || ((buffer->rest)[bytes_read - 1] != '\n'
 							&& bytes_read < BUFFER_SIZE)))
-				buf->status = ALL_READ;
+				buffer->status = ALL_READ;
 			if (bytes_read >= 0)
-				ret_code = parse_data(line_part, buf, line, bytes_read);
+				return_code = process_data(line_segment, buffer, line, bytes_read);
 		}
 	}
-	return (ret_code);
+	return (return_code);
 }
 
-static t_buf	*init_buffer(t_buf *buf)
+static t_buf	*initialize_buffer(t_buf *buffer)
 {
-	buf = (t_buf *)malloc(sizeof(t_buf));
-	if (buf != NULL)
+	buffer = (t_buf *)malloc(sizeof(t_buf));
+	if (buffer != NULL)
 	{
-		buf->rest = NULL;
-		buf->status = NOT_FINISHED;
+		buffer->rest = NULL;
+		buffer->status = NOT_FINISHED;
 	}
-	return (buf);
+	return (buffer);
 }
 
-// get_next_line function
-int get_next_line(int fd, char **line)
+int fetch_next_line(int file_descriptor, char **line)
 {
-    short ret_code;
-    static t_buf *buf = NULL;
-    char *line_part;
+	short return_code;
+	static t_buf *buffer = NULL;
+	char *line_segment = NULL;
 
-    ret_code = ERROR;
+	return_code = ERROR;
 
-    // Check if line is not NULL, fd is not negative and BUFFER_SIZE is greater than 0
-    if (line != NULL && fd >= 0 && BUFFER_SIZE > 0)
-    {
-        // Initialize buffer if it's NULL
-        if (buf == NULL)
-        {
-            buf = init_buffer(buf);
-            if (buf == NULL)
-                return (ERROR);
-        }
+	// Validate the input parameters
+	if (line != NULL && file_descriptor >= 0 && BUFFER_SIZE > 0)
+	{
+		// If the buffer is not initialized, do it now
+		if (buffer == NULL)
+		{
+			buffer = initialize_buffer(buffer);
+			if (buffer == NULL)
+				return (ERROR);
+		}
 
-        line_part = NULL;
-        ret_code = NOT_ENOUGH;
+		return_code = NOT_ENOUGH;
 
-        // Parse data if there's any in the buffer
-        if (buf->rest != NULL)
-            ret_code = parse_data(&line_part, buf, line, ft_strlen(buf->rest));
+		// If there's data in the buffer, process it
+		if (buffer->rest != NULL)
+			return_code = process_data(&line_segment, buffer, line, ft_strlen(buffer->rest));
 
-        // Read more data if not enough data was parsed
-        if (ret_code == NOT_ENOUGH)
-            ret_code = read_part(&line_part, buf, line, fd);
+		// If we didn't get enough data, read more from the file
+		if (return_code == NOT_ENOUGH)
+			return_code = read_segment(&line_segment, buffer, line, file_descriptor);
 
-        // Free buffer if end of file was reached or an error occurred
-        if (ret_code == END || ret_code == ERROR)
-        {
-            free(buf->rest);
-            free(buf);
-            buf = NULL;
-        }
-    }
+		// If we've reached the end of the file or encountered an error, clean up the buffer
+		if (return_code == END || return_code == ERROR)
+		{
+			free(buffer->rest);
+			free(buffer);
+			buffer = NULL;
+			if (line_segment != NULL)
+			{
+				free(line_segment);
+				line_segment = NULL;
+			}
+		}
+	}
 
-    return (ret_code);
+	return (return_code);
 }
+
 /*
 ================================================================================
 ******************* START OF MAIN FILE FOR TEST ******************* 
 */
-
-#include <fcntl.h>
-#include <stdio.h>
-#include "get_next_line.h"
-
 int main(void)
 {
-	int fd;
-	char *line = NULL;
-	int ret;
+    int file_descriptor;
+    char *line = NULL;
 
-	// Open the test file
-	fd = open("test.txt", O_RDONLY);
-	if (fd == -1)
-	{
-		perror("Error opening file");
-		return 1;
-	}
+    // Open the file
+    file_descriptor = open("test.txt", O_RDONLY);
+    if (file_descriptor < 0)
+    {
+        perror("Error opening file");
+        return (1);
+    }
 
-	printf("Starting to read lines from test.txt...\n");
+    // Use fetch_next_line to read lines from the file
+    while (fetch_next_line(file_descriptor, &line) > 0)
+    {
+        // Print each line to the console
+        printf("%s\n", line);
+        // Free the memory allocated for each line
+        free(line);
+        line = NULL;
+    }
 
-	// Read and print lines until end of file is reached or an error occurs
-	while ((ret = get_next_line(fd, &line)) > 0)
-	{
-		printf("Read line: %s\n", line);
-		free(line);
-		line = NULL;
-	}
+    // Check if there was an error reading the last line
+    if (line != NULL)
+    {
+        free(line);
+    }
 
-	// Print last line if end of file was reached
-	if (ret == 0)
-	{
-		printf("Read last line: %s\n", line);
-		free(line);
-	}
+    // Close the file
+    close(file_descriptor);
 
-	// Close file
-	close(fd);
+	//   It is also possible to run cc -D BUFFER_SIZE=1024 get_next_line.c get_next_line_utils.c -o get_next_line and modify BUFFER_SIZE 
 
-	printf("Finished reading lines from test.txt.\n");
-
-	return 0;
+    return (0);
 }
 /*
 ******************* END OF MAIN FILE FOR TEST *******************
