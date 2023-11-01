@@ -1,4 +1,4 @@
-# 📚 Get_Next_Line Project
+<h1 align="center">📚 Get_Next_Line Project</h1>
 
 ## 📖 Overview
 `get_next_line` is a function that reads a file line by line. The main goal of this project is to create a function 
