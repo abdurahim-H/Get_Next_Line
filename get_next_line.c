@@ -6,7 +6,7 @@
 /*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/01 11:32:54 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/01 19:55:50 by abhudulo         ###   ########.fr       */
+/*   Updated: 2023/11/03 10:31:41 by abhudulo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,48 +143,3 @@ int fetch_next_line(int file_descriptor, char **line)
 
 	return (return_code);
 }
-
-/*
-================================================================================
-******************* START OF MAIN FILE FOR TEST ******************* 
-*/
-int main(void)
-{
-    int file_descriptor;
-    char *line = NULL;
-
-    // Open the file
-    file_descriptor = open("test.txt", O_RDONLY);
-    if (file_descriptor < 0)
-    {
-        perror("Error opening file");
-        return (1);
-    }
-
-    // Use fetch_next_line to read lines from the file
-    while (fetch_next_line(file_descriptor, &line) > 0)
-    {
-        // Print each line to the console
-        printf("%s\n", line);
-        // Free the memory allocated for each line
-        free(line);
-        line = NULL;
-    }
-
-    // Check if there was an error reading the last line
-    if (line != NULL)
-    {
-        free(line);
-    }
-
-    // Close the file
-    close(file_descriptor);
-
-	//   It is also possible to run cc -D BUFFER_SIZE=1024 get_next_line.c get_next_line_utils.c -o get_next_line and modify BUFFER_SIZE 
-
-    return (0);
-}
-/*
-******************* END OF MAIN FILE FOR TEST *******************
-================================================================================
-*/
