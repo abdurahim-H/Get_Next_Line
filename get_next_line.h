@@ -6,7 +6,7 @@
 /*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/01 11:33:17 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/01 19:54:43 by abhudulo         ###   ########.fr       */
+/*   Updated: 2023/11/07 13:01:50 by abhudulo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,12 @@ typedef struct	s_list
 	char			*rest;
 }				t_buf;
 
-int				get_next_line(int fd, char **line);
-size_t			ft_strlen(const char *str);
+int				fetch_next_line(int file_descriptor, char **line);
+static t_buf	*initialize_buffer(t_buf *buffer);
+static short	read_segment(char **line_segment, t_buf *buffer, char **line, int file_descriptor);
+static short	process_data(char **line_segment, t_buf *buffer, char **line, size_t length);
+static short	handle_no_newline(char **line_part, t_buf *buffer, char **line, size_t length);
 char			*join_and_free(char *line_segment, char *buffer, size_t buffer_length, char *to_free);
+size_t			ft_strlen(const char *str);
 
 #endif
-
