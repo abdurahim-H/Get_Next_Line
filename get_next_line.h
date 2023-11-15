@@ -1,46 +1,25 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.h                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/01 11:33:17 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/07 13:03:55 by abhudulo         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
-
-# define BUFF_SIZE		0
-
-# define ERROR			-1
-# define END			0
-# define ENOUGH			1
-# define NOT_ENOUGH		2
-# define NOT_FINISHED	3
-# define ALL_READ		4
-
-# include <stdlib.h>
-# include <sys/types.h>
-# include <sys/uio.h>
 # include <unistd.h>
+# include <stdlib.h>
+# include <string.h>
 # include <fcntl.h>
 # include <stdio.h>
 
-typedef struct	s_list
-{
-	short			status;
-	char			*rest;
-}				t_buf;
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE	10
+# endif
 
-int					fetch_next_line(int file_descriptor, char **line);
-static t_buf		*initialize_buffer(t_buf *buffer);
-static short		read_segment(char **line_segment, t_buf *buffer, char **line, int file_descriptor);
-static short		process_data(char **line_segment, t_buf *buffer, char **line, size_t length);
-static short		handle_no_newline(char **line_part, t_buf *buffer, char **line, size_t length);
-char				*join_and_free(char *line_segment, char *buffer, size_t buffer_length, char *to_free);
-size_t				ft_strlen(const char *str);
+// #define MAX_FD 1024
+
+char		*get_next_line(int fd);
+char		*ft_strcat_and_copy(char *dest, const char *src, int is_copy);
+char		*ft_strdup(const char *s1);
+char		*ft_strjoin(char const *s1, char const *s2);
+int			ft_findstrind(const char *s, int c);
+void		ft_strdel(char **as);
+int			ft_new_line(char **s, char **line, int result);
+char		*ft_substr(char const *s, unsigned int start, size_t len);
+size_t		ft_strlen(const char *str);
 
 #endif

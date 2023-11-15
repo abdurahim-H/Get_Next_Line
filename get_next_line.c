@@ -1,145 +1,167 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: abhudulo <abhudulo@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/01 11:32:54 by abhudulo          #+#    #+#             */
-/*   Updated: 2023/11/03 10:31:41 by abhudulo         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "get_next_line.h"
-#include <stdlib.h>
-#include <unistd.h>
 
-#define BUFFER_SIZE 4096
-
-static short	handle_no_newline(char **line_part, t_buf *buffer, char **line, size_t length)
+int	ft_findstrind(const char *s, int c)
 {
-	short		return_code;
+	int	i;
 
-	if (buffer->status == NOT_FINISHED)
-	{
-		*line_part = join_and_free(*line_part, buffer->rest, length, *line_part);
-		free(buffer->rest);
-		return_code = (*line_part != NULL) ? NOT_ENOUGH : ERROR;
-	}
-	else
-	{
-		*line = join_and_free(*line_part, buffer->rest, length, *line_part);
-		return_code = (*line != NULL) ? END : ERROR;
-	}
-	return (return_code);
+	if (!s)
+		return (-1);
+	i = 0;
+	while (s[i] && s[i] != (char)c)
+		i++;
+	if (s[i] == c)
+		return (i);
+	return (-1);
 }
 
-static short	process_data(char **line_segment, t_buf *buffer, char **line, size_t length)
+void	ft_strdel(char **as)
 {
-	short			return_code;
-	unsigned long	index;
-
-	return_code = ERROR;
-	index = 0;
-	while (index < length && (buffer->rest)[index] != '\n')
-		index++;
-	if (index < length)
+	if (as)
 	{
-		*line = join_and_free(*line_segment, buffer->rest, index, *line_segment);
-		if (*line != NULL)
+		free(*as);
+		*as = NULL;
+	}
+}
+
+int	ft_new_line(char **s, char **line, int result)
+{
+	char	*temp;
+	int		str_end;
+
+	str_end = ft_findstrind(*s, '\n');
+	if ((str_end) != -1)
+	{
+		*line = ft_substr(*s, 0, str_end + 1);
+		temp = ft_strdup(&(*s)[str_end + 1]);
+		free(*s);
+		*s = temp;
+		if ((*s)[0] == '\0')
+			ft_strdel(s);
+	}
+	else if (result == 0)
+	{
+		*line = ft_strdup(*s);
+		ft_strdel(s);
+		return (0);
+	}
+	return (1);
+}
+
+char	*read_from_file(int fd, char *s, int *result)
+{
+	char	buffer[BUFFER_SIZE + 1];
+	char	*temp;
+
+	*result = 0;
+	if (ft_findstrind(s, '\n') == -1)
+	{
+		while (1)
 		{
-			index++;
-			buffer->rest = join_and_free(NULL, buffer->rest + index, length - index, buffer->rest);
-			if (buffer->rest != NULL)
-				return_code = ENOUGH;
+			*result = read(fd, buffer, BUFFER_SIZE);
+			if (*result <= 0)
+				break ;
+			buffer[*result] = '\0';
+			if (s == NULL)
+				s = ft_strdup(buffer);
 			else
-				free(*line);
+			{
+				temp = ft_strjoin(s, buffer);
+				free(s);
+				s = temp;
+			}
+			if (ft_findstrind(buffer, '\n') > -1)
+				break ;
 		}
+	}
+	return (s);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*s = NULL;
+	char		*line;
+	int			result;
+
+	result = 0;
+	s = read_from_file(fd, s, &result);
+	if (result < 0)
+	{
+		free(s);
+		s = NULL;
+		return (NULL);
+	}
+	else if (result == 0 && s == NULL && ft_findstrind(s, '\n') == -1)
+	{
+		free(s);
+		s = NULL;
+		return (NULL);
 	}
 	else
-		return_code = handle_no_newline(line_segment, buffer, line, length);
-	return (return_code);
+		if (ft_new_line(&s, &line, result) == 1
+			|| (result == 0 && line != NULL))
+			return (line);
+	free(s);
+	s = NULL;
+	return (NULL);
 }
 
-static short	read_segment(char **line_segment, t_buf *buffer, char **line, int file_descriptor)
-{
-	short		return_code;
-	ssize_t		bytes_read;
+// char	*read_from_fd(int fd, char *s, int *result)
+// {
+// 	s = read_from_file(fd, s, result);
+// 	if (*result < 0)
+// 	{
+// 		free(s);
+// 		s = NULL;
+// 	}
+// 	return (s);
+// }
 
-	return_code = NOT_ENOUGH;
-	while (return_code == NOT_ENOUGH)
-	{
-		return_code = ERROR;
-		buffer->rest = (char *)malloc(sizeof(char) * BUFFER_SIZE);
-		if (buffer->rest != NULL)
-		{
-			bytes_read = read(file_descriptor, buffer->rest, BUFFER_SIZE);
-			if (file_descriptor != 0 && bytes_read < BUFFER_SIZE)
-				buffer->status = ALL_READ;
-			else if (file_descriptor == 0
-					&& (bytes_read == 0 || ((buffer->rest)[bytes_read - 1] != '\n'
-							&& bytes_read < BUFFER_SIZE)))
-				buffer->status = ALL_READ;
-			if (bytes_read >= 0)
-				return_code = process_data(line_segment, buffer, line, bytes_read);
-		}
-	}
-	return (return_code);
-}
+// char	*get_next_line(int fd)
+// {
+// 	static char	*s[MAX_FD];
+// 	char		*line;
+// 	int			result;
 
-static t_buf	*initialize_buffer(t_buf *buffer)
-{
-	buffer = (t_buf *)malloc(sizeof(t_buf));
-	if (buffer != NULL)
-	{
-		buffer->rest = NULL;
-		buffer->status = NOT_FINISHED;
-	}
-	return (buffer);
-}
+// 	if (fd < 0 || fd >= MAX_FD)
+// 		return (NULL);
+// 	result = 0;
+// 	s[fd] = read_from_fd(fd, s[fd], &result);
+// 	if (s[fd] == NULL)
+// 		return (NULL);
+// 	else if (result == 0 && s[fd] == NULL && ft_findstrind(s[fd], '\n') == -1)
+// 	{
+// 		free(s[fd]);
+// 		s[fd] = NULL;
+// 		return (NULL);
+// 	}
+// 	else
+// 		if (ft_new_line(&s[fd], &line, result) == 1
+// 			|| (result == 0 && line != NULL))
+// 			return (line);
+// 	free(s[fd]);
+// 	s[fd] = NULL;
+// 	return (NULL);
+// }
 
-int fetch_next_line(int file_descriptor, char **line)
-{
-	short return_code;
-	static t_buf *buffer = NULL;
-	char *line_segment = NULL;
+// int main(void)
+// {
+//     int fd;
+//     char *line;
 
-	return_code = ERROR;
+//     fd = open("t.txt", O_RDONLY);
+//     if (fd == -1)
+//     {
+//         printf("Error opening file\n");
+//         return (1);
+//     }
 
-	// Validate the input parameters
-	if (line != NULL && file_descriptor >= 0 && BUFFER_SIZE > 0)
-	{
-		// If the buffer is not initialized, do it now
-		if (buffer == NULL)
-		{
-			buffer = initialize_buffer(buffer);
-			if (buffer == NULL)
-				return (ERROR);
-		}
+//     while ((line = get_next_line(fd)) != NULL)
+//     {
+//         printf("%s\n", line);
+//         free(line);
+//     }
 
-		return_code = NOT_ENOUGH;
+//     close(fd);
 
-		// If there's data in the buffer, process it
-		if (buffer->rest != NULL)
-			return_code = process_data(&line_segment, buffer, line, ft_strlen(buffer->rest));
-
-		// If we didn't get enough data, read more from the file
-		if (return_code == NOT_ENOUGH)
-			return_code = read_segment(&line_segment, buffer, line, file_descriptor);
-
-		// If we've reached the end of the file or encountered an error, clean up the buffer
-		if (return_code == END || return_code == ERROR)
-		{
-			free(buffer->rest);
-			free(buffer);
-			buffer = NULL;
-			if (line_segment != NULL)
-			{
-				free(line_segment);
-				line_segment = NULL;
-			}
-		}
-	}
-
-	return (return_code);
-}
+//     return (0);
+// }
